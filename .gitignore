@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+venv/
+env/
+*.pyc
+*.pyo
+*.pyd 
+*.egg-info/
+.vscode/
+
+# Environment and secrets
+.env
+
+# Output files
+output/
+logs/
+*.log
+
+# Test artifacts
+.cache/
+*.pdf
