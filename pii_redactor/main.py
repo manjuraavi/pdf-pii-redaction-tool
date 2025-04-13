@@ -112,7 +112,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.web:
-        subprocess.run(["streamlit", "run", "pii_redactor/streamlit_app.py", "--browser.gatherUsageStats", "false"])
+        subprocess.run(["streamlit", "run", os.path.join(os.path.dirname(__file__), "streamlit_app.py"), "--browser.gatherUsageStats", "false"])
         return 0
 
     if not args.input_file:
