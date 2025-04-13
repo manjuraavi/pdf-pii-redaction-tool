@@ -1,28 +1,29 @@
-# PDF PII Redactor Tool
+# 📄 PDF PII Redactor Tool
 
 A multilingual, context-aware PII redaction tool that removes sensitive information from PDF documents (not just masking — the data is truly deleted) ensuring thorough privacy protection. 
 
-## Table of Contents
+## 📚 Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage Guide](#usage)
-  - [Command Line Interface](#command-line-interface)
-  - [Web Interface](#web-interface)
-  - [Evaluation Mode](#evaluation-mode)
-  - [Running Tests](#running-tests)
-- [Code Structure](#code-structure)
-- [Technical Approach](#technical-approach)
-  - [Architecture](#architecture)
-  - [PII Detection Methodology](#pii-detection-methodology)
-  - [Redaction Process](#redaction-process)
-- [PII Types Detected](#pii-types-detected)
-- [Design Decisions](#design-decisions)
-- [Limitations](#limitations)
-- [Future Improvements](#future-improvements)
-- [License](#license)
+- [✨ Features](#features)
+- [⚙️ Installation](#installation)
+- [📖 Usage Guide](#usage-guide)
+  - [💻 Command Line Interface](#command-line-interface)
+  - [🌐 Web Interface](#web-interface)
+  - [📊 Evaluation Mode](#evaluation-mode)
+  - [🧪 Running Tests](#running-tests)
+- [📂 Code Structure](#code-structure)
+- [🛠️ Technical Approach](#technical-approach)
+  - [🏗️ Architecture](#architecture)
+  - [🔍 PII Detection Methodology](#pii-detection-methodology)
+  - [🖍️ Redaction Process](#redaction-process)
+- [🔑 PII Types Detected](#pii-types-detected)
+- [💡 Design Decisions](#design-decisions)
+- [⚠️ Limitations](#limitations)
+- [🚀 Future Improvements](#future-improvements)
+- [📜 License](#license)
+- [🙌 Credits](#credits)
 
-## Features
+## ✨ Features
 
 - **Comprehensive PII Detection**: Identifies a wide range of personal information including names, email addresses, phone numbers, addresses, IDs, and more
 - **Hybrid Detection Approach**: Combines regex pattern matching with LLM-based detection for improved accuracy
@@ -33,7 +34,7 @@ A multilingual, context-aware PII redaction tool that removes sensitive informat
 - **Progress Tracking**: Real-time progress and logging information
 - **Customizable Output**: Save redacted PDFs with your preferred naming convention
 
-## Installation
+## ⚙️ Installation
 
 ### Prerequisites
 
@@ -86,9 +87,9 @@ pii-redactor /path/to/your/document.pdf
      export OPENAI_API_KEY=your_api_key_here  # On Windows: set OPENAI_API_KEY=your_api_key_here
      ```
 
-## Usage Guide
+## 📖 Usage Guide
 
-### Command Line Interface
+### 💻 Command Line Interface
 
 Redact a PDF:
 
@@ -110,7 +111,7 @@ Enable verbose logging:
 pii-redactor /path/to/your/document.pdf -v
 ```
 
-### Web Interface
+### 🌐 Web Interface
 
 Launch the Streamlit web application:
 
@@ -125,7 +126,7 @@ Then:
 4. Click "Redact PII"
 5. Download the redacted PDF when processing is complete
 
-### Evaluation Mode
+### 📊 Evaluation Mode
 
 To evaluate redaction against a ground truth file:
 
@@ -149,7 +150,7 @@ Ground truth format (JSON):
 
 2. In the web interface, enable the "Enable Evaluation" checkbox in advanced options and upload a ground truth file.
 
-### Running Tests
+### 🧪 Running Tests
 
 The project includes comprehensive tests to ensure functionality works as expected:
 
@@ -168,7 +169,7 @@ pytest tests/test_redactor.py
 pytest --cov=pii_redactor
 ```
 
-## Code Structure
+## 📂 Code Structure
 
 The project follows a modular architecture with clear separation of concerns:
 
@@ -199,9 +200,9 @@ pii-redactor/
 - **pdf_processor.py**: Handles PDF operations like text extraction and content manipulation
 - **evaluate_metrics.py**: Provides functionality to evaluate redaction quality against ground truth
 
-## Technical Approach
+## 🛠️ Technical Approach
 
-### Architecture
+### 🏗️ Architecture
 
 The PII Redactor Tool is built with a modular architecture that separates concerns:
 
@@ -210,7 +211,7 @@ The PII Redactor Tool is built with a modular architecture that separates concer
 3. **Redaction**: Applies visual redactions to the PDF
 4. **Evaluation**: Measures the quality of redaction against ground truth
 
-### PII Detection Methodology
+### 🔍 PII Detection Methodology
 
 The tool uses a multi-layered approach to PII detection:
 
@@ -221,7 +222,7 @@ The tool uses a multi-layered approach to PII detection:
 
 This hybrid approach achieves a balance between precision and recall, using computationally less expensive methods first before engaging the more powerful but resource-intensive LLM.
 
-### Redaction Process
+### 🖍️ Redaction Process
 
 The redaction workflow consists of several steps:
 
@@ -232,7 +233,7 @@ The redaction workflow consists of several steps:
 5. **Sanitize Metadata**: Remove document metadata that might contain sensitive information
 6. **Save Output**: Generate the redacted PDF with all sensitive information obscured
 
-## PII Types Detected
+## 🔑 PII Types Detected
 
 The tool is designed to detect a comprehensive range of PII, including but not limited to:
 
@@ -265,13 +266,13 @@ The tool is designed to detect a comprehensive range of PII, including but not l
 
 The combination of regex pattern detection and LLM analysis allows the tool to identify both structured PII (like SSNs with predictable formats) and unstructured PII (like descriptive references to individuals).
 
-## Design Decisions
+## 💡 Design Decisions
 
 ### PDF Redaction Implementation
 
 #### Selected Approach: PyMuPDF with `apply_redactions()`
 
-PyMuPDF (fitz) it provides true content removal through its redaction API. Our implementation:
+PyMuPDF (fitz) provides true content removal through its redaction API. Implentation as below:
 
 1. Uses `page.add_redact_annot()` to mark PII areas for redaction
 2. Calls `page.apply_redactions()` to permanently remove the underlying text
@@ -385,7 +386,7 @@ The evaluation system measures:
 
 These metrics help tune the system and provide confidence in the redaction quality.
 
-## Limitations
+## ⚠️ Limitations
 
 Despite the tool's capabilities, there are several limitations to be aware of:
 
@@ -401,7 +402,7 @@ Despite the tool's capabilities, there are several limitations to be aware of:
 
 6. **Specific PII Types**: Detecting certain PII types like medical information or genetic data requires domain knowledge that may be incomplete in the model.
 
-## Future Improvements
+## 🚀 Future Improvements
 
 Several enhancements could further improve the tool:
 
@@ -418,10 +419,10 @@ Several enhancements could further improve the tool:
 6. **Document Type Specialization**: Add specific detection patterns for common document types (resumes, medical records, financial statements).
 
 
-## License
+## 📜 License
 This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-## Credits
+## 🙌 Credits
 Created by [Manjusha Raavi](https://github.com/manjuraavi)
