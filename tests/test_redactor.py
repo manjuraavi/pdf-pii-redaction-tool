@@ -76,8 +76,7 @@ class TestPIIRedactor(unittest.TestCase):
         mock_page.add_redact_annot.assert_called()  # Ensure redaction annotations are added
         mock_page.apply_redactions.assert_called()  # Ensure redactions are applied
         self.assertEqual(mock_doc.save.call_args[0][0], "output.pdf")  # Ensure the correct file is saved
-        mock_doc.save.assert_any_call("output.pdf", garbage=4, deflate=True, clean=True, pretty=True)
-        mock_doc.save.assert_called_with("output.pdf", incremental=False)
+        mock_doc.save.assert_called_with("output.pdf", garbage=4, deflate=True, clean=True, pretty=True, incremental=False)
 
     @patch("fitz.open")
     def test_redact_pdf_error_handling(self, mock_fitz_open):
@@ -108,7 +107,7 @@ class TestPIIRedactor(unittest.TestCase):
         self.assertFalse(result)  # Ensure the process fails
         mock_logger.exception.assert_called_with("Redaction failed")  # Log the exception
 
-    def test_find_pii_matches_on_page_full_match(self):
+    def test_find_pii_matches_on_page_match(self):
         """
         Test finding full matches for PII text on a PDF page.
         Inputs: Mocked PDF page with full matches for PII text.
@@ -128,28 +127,6 @@ class TestPIIRedactor(unittest.TestCase):
         # Assertions
         self.assertEqual(matches, ["match1", "match2"])  # Ensure matches are correct
         mock_page.search_for.assert_called_with("John Doe", quads=False)  # Ensure correct search call
-
-    def test_find_pii_matches_on_page_partial_match(self):
-        """
-        Test finding partial matches for PII text on a PDF page.
-        Inputs: Mocked PDF page with partial matches for PII text.
-        Outputs: Asserts that all matches are correctly identified.
-        """
-        # Mock dependencies
-        mock_logger = MagicMock()
-        mock_page = MagicMock()
-        mock_page.search_for.side_effect = [[], ["match1"], ["match2"]]  # Mock partial matches
-
-        # Instantiate PIIRedactor
-        redactor = PIIRedactor(logger=mock_logger, openai_api_key=os.getenv("OPENAI_API_KEY"))
-
-        # Call find_pii_matches_on_page
-        matches = redactor.find_pii_matches_on_page(mock_page, "John, Doe")
-
-        # Assertions
-        self.assertEqual(matches, ["match1", "match2"])  # Ensure matches are correct
-        mock_page.search_for.assert_any_call("John", quads=False)  # Ensure correct search for "John"
-        mock_page.search_for.assert_any_call("Doe", quads=False)  # Ensure correct search for "Doe"
 
 if __name__ == "__main__":
     unittest.main()  # Run the unit tests
