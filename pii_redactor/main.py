@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
 PII Redactor Tool - Redact personally identifiable information (PII) from PDF documents.
-This file acts as the entry point to the tool through CLI. 
 """
 
 import argparse
+from pathlib import Path
 import sys
 import os
 import logging
 from datetime import datetime
+import time
 from pii_redactor.redactor import PIIRedactor
-from pii_redactor.utils import OUTPUT_DIR
+from pii_redactor.utils import OUTPUT_DIR, check_env_key, validate_evaluate_input, validate_input
+from pii_redactor.evaluate_metrics import evaluate
 from dotenv import load_dotenv
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -56,49 +59,6 @@ def generate_output_filename(input_file: str) -> str:
 
     return output_file
 
-def validate_input(input_path: str, logger: logging.Logger) -> bool:
-    """
-    Validate that the input path exists and is a valid non-scanned PDF.
-    Inputs: input_path (str) - Path to the input file, logger (logging.Logger) - Logger instance.
-    Outputs: bool - True if the input is valid, False otherwise.
-    """
-    if not os.path.exists(input_path):  # Check if the file exists
-        logger.error(f"Input file not found: {input_path}")
-        print(f"Error: Input file '{input_path}' not found.")
-        return False
-
-    if not input_path.lower().endswith(".pdf"):  # Ensure the file is a PDF
-        logger.error("Unsupported file format")
-        print("Error: Only PDF files are supported.")
-        return False
-
-    try:
-        import fitz  # Import PyMuPDF for PDF processing
-        doc = fitz.open(input_path)
-        # Check if the PDF has at least one page with selectable text
-        if len(doc) == 0 or all(page.get_text().strip() == '' for page in doc):
-            logger.error("The PDF file is either empty or consists of scanned images.")
-            print("Error: Input file appears to be a scanned PDF or contains no selectable text.")
-            return False
-        doc.close()
-    except Exception as e:
-        logger.error(f"Error validating PDF file: {e}")
-        return False
-
-    return True
-
-def check_env_key(logger: logging.Logger) -> str:
-    """
-    Check for the required OpenAI API key from the environment.
-    Inputs: logger (logging.Logger) - Logger instance.
-    Outputs: str - The OpenAI API key if found, otherwise None.
-    """
-    key = os.getenv("OPENAI_API_KEY")  # Retrieve the API key from environment variables
-    if not key:
-        logger.error("Missing OPENAI_API_KEY in environment.")
-        print("Error: OPENAI_API_KEY not found in .env file or environment variables.")
-    return key
-
 def process_pdf(input_file: str, output_file: str, logger: logging.Logger) -> int:
     """
     Run the redaction pipeline on the input PDF.
@@ -111,18 +71,20 @@ def process_pdf(input_file: str, output_file: str, logger: logging.Logger) -> in
         if not openai_api_key:
             return 1
 
+        
         logger.info(f"Starting PII redaction on {input_file}")
         # Initialize the redactor with the logger and API key
         redactor = PIIRedactor(logger=logger, openai_api_key=openai_api_key)
+        start = time.time()
         success = redactor.redact_pdf(input_file, output_file)  # Perform the redaction
+        end = time.time()
 
         if success:
-            logger.info(f"Successfully redacted: {output_file}")
-            print(f"Output saved to: {output_file}")
+            logger.info(f"Successfully redacted. Redacted file path: {output_file}")
+            logger.info(f"Time taken to redact PII from file: {end - start:.2f}ss")
             return 0
         else:
             logger.error("Redaction process failed.")
-            print("Error: Redaction failed.")
             return 1
 
     except Exception as e:
@@ -142,6 +104,8 @@ def main() -> int:
     parser.add_argument("input_file", type=str, help="Path to the input PDF file")
     parser.add_argument("-o", "--output", dest="output_file", type=str, help="Path to save the redacted PDF")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("-e", "--evaluate", action="store_true", help="Evaluate redaction with ground truth")
+    parser.add_argument("-gt", "--ground_truth", type=str, help="Path to ground truth JSON file")
 
     args = parser.parse_args()
 
@@ -156,7 +120,26 @@ def main() -> int:
     # Generate output file path if not provided
     output_path = args.output_file or generate_output_filename(input_path)
 
-    return process_pdf(input_path, output_path, logger)  # Process the PDF
+    # Run redaction
+    status = process_pdf(input_path, output_path, logger)
+    if status != 0:
+        logger.error("Redaction process failed.")
+        return status
+
+    # Run evaluation if flag is set
+    if args.evaluate:
+        if not validate_evaluate_input(args, logger):  # Validate evaluation inputs
+            return 1
+
+        logger.info("Running evaluation against ground truth...")
+        try:
+            results = evaluate(input_path, output_path, args.ground_truth)
+            logger.info("Evaluation complete.")
+        except Exception as e:
+            logger.exception(f"Evaluation failed: {e}")
+            return 1
+
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())  # Exit with the return code from main()
