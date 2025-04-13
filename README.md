@@ -44,7 +44,7 @@ A multilingual, context-aware PII redaction tool that removes sensitive informat
 ### Option 1: Install from GitHub (Recommended)
 
 ```bash    
-pip install git+https://github.com/manjuraavi/pdf-pii-redactor-tool.git
+pip install git+https://github.com/manjuraavi/pdf-pii-redaction-tool.git
 ```
 
 Then you can run the tool with:
@@ -57,8 +57,8 @@ pii-redactor /path/to/your/document.pdf
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/manjuraavi/pdf-pii-redactor-tool.git
-   cd pii-redactor
+   git clone https://github.com/manjuraavi/pdf-pii-redaction-tool.git
+   cd pdf-pii-redaction-tool
    ```
 
 2. Create a virtual environment:
