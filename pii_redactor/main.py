@@ -5,6 +5,7 @@ PII Redactor Tool - Redact personally identifiable information (PII) from PDF do
 
 import argparse
 from pathlib import Path
+import subprocess
 import sys
 import os
 import logging
@@ -106,8 +107,13 @@ def main() -> int:
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-e", "--evaluate", action="store_true", help="Evaluate redaction with ground truth")
     parser.add_argument("-gt", "--ground_truth", type=str, help="Path to ground truth JSON file")
+    parser.add_argument('--web', action='store_true', help='Launch Streamlit web interface')
 
     args = parser.parse_args()
+
+    if args.web:
+        subprocess.run(["streamlit", "run", "pii_redactor/streamlit_app.py"])
+        return
 
     logger = setup_logging()  # Set up logging
     if args.verbose:
