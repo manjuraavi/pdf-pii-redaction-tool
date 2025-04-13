@@ -1,12 +1,12 @@
-# PII Redactor Tool
+# PDF PII Redactor Tool
 
-A robust tool for automatically detecting and redacting Personally Identifiable Information (PII) from PDF documents using advanced NLP techniques and OpenAI's large language models.
+A multilingual, context-aware PII redaction tool that removes sensitive information from PDF documents (not just masking — the data is truly deleted) ensuring thorough privacy protection. 
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
+- [Usage Guide](#usage)
   - [Command Line Interface](#command-line-interface)
   - [Web Interface](#web-interface)
   - [Evaluation Mode](#evaluation-mode)
@@ -16,13 +16,10 @@ A robust tool for automatically detecting and redacting Personally Identifiable 
   - [Architecture](#architecture)
   - [PII Detection Methodology](#pii-detection-methodology)
   - [Redaction Process](#redaction-process)
-  - [Comparison with Other NLP Techniques](#comparison-with-other-nlp-techniques)
 - [PII Types Detected](#pii-types-detected)
 - [Design Decisions](#design-decisions)
 - [Limitations](#limitations)
 - [Future Improvements](#future-improvements)
-- [Technical Requirements Fulfillment](#technical-requirements-fulfillment)
-- [Contributing](#contributing)
 - [License](#license)
 
 ## Features
@@ -52,7 +49,7 @@ pip install git+https://github.com/manjuraavi/pdf-pii-redactor-tool.git
 Then you can run the tool with:
 
 ```bash
-pii-redactor your_file.pdf
+pii-redactor /path/to/your/document.pdf
 ```
 
 ### Option 2: Clone and run locally (for devs):
@@ -89,7 +86,7 @@ pii-redactor your_file.pdf
      export OPENAI_API_KEY=your_api_key_here  # On Windows: set OPENAI_API_KEY=your_api_key_here
      ```
 
-## Usage
+## Usage Guide
 
 ### Command Line Interface
 
@@ -179,7 +176,7 @@ The project follows a modular architecture with clear separation of concerns:
 pii-redactor/
 ├── pii_redactor/                # Main package
 │   ├── __init__.py
-│   ├── cli.py                   # Command line interface
+│   ├── main.py                   # Command line interface
 │   ├── redactor.py              # Core redaction functionality
 │   ├── pii_detector.py          # PII detection logic
 │   ├── pdf_processor.py         # PDF handling
@@ -197,13 +194,10 @@ pii-redactor/
 
 ### Core Files and Their Functions
 
-- **cli.py**: Entry point for command-line usage, handling arguments, logging, and workflow
 - **redactor.py**: Main class that orchestrates the PDF redaction process, locating PII within pages and applying redactions
 - **pii_detector.py**: Implements PII detection using regex patterns and LLM validation/expansion
 - **pdf_processor.py**: Handles PDF operations like text extraction and content manipulation
 - **evaluate_metrics.py**: Provides functionality to evaluate redaction quality against ground truth
-- **utils.py**: Contains utility functions for validation, path handling, and environment setup
-- **streamlit_app.py**: Implements the web-based user interface using Streamlit
 
 ## Technical Approach
 
@@ -277,7 +271,7 @@ The combination of regex pattern detection and LLM analysis allows the tool to i
 
 #### Selected Approach: PyMuPDF with `apply_redactions()`
 
-We chose PyMuPDF (fitz) for PDF redaction because it provides true content removal through its redaction API. Our implementation:
+PyMuPDF (fitz) it provides true content removal through its redaction API. Our implementation:
 
 1. Uses `page.add_redact_annot()` to mark PII areas for redaction
 2. Calls `page.apply_redactions()` to permanently remove the underlying text
@@ -312,7 +306,7 @@ We chose PyMuPDF (fitz) for PDF redaction because it provides true content remov
 
 #### Selected Approach: OpenAI GPT-4 with Hybrid Detection
 
-Our implementation combines regex pattern matching with LLM-based detection:
+Combined regex pattern matching with LLM-based detection:
 
 1. Initial fast-pass detection using compiled regex patterns
 2. LLM validation and expansion to catch contextual PII
