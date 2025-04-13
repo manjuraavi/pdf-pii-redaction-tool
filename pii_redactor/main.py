@@ -102,7 +102,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="PII Redaction Tool - Redacts sensitive data from PDF files."
     )
-    parser.add_argument("input_file", type=str, help="Path to the input PDF file")
+    parser.add_argument("input_file", type=str, nargs="?", help="Path to the input PDF file")
     parser.add_argument("-o", "--output", dest="output_file", type=str, help="Path to save the redacted PDF")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-e", "--evaluate", action="store_true", help="Evaluate redaction with ground truth")
@@ -112,8 +112,11 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.web:
-        subprocess.run(["streamlit", "run", "pii_redactor/streamlit_app.py"])
-        return
+        subprocess.run(["streamlit", "run", "pii_redactor/streamlit_app.py", "--browser.gatherUsageStats", "false"])
+        return 0
+
+    if not args.input_file:
+        parser.error("the following arguments are required: input_file (unless using --web)")
 
     logger = setup_logging()  # Set up logging
     if args.verbose:
