@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-"""
-Streamlit UI for PII Redactor Tool - Web interface to redact personally identifiable 
-information (PII) from PDF documents.
-"""
+# Streamlit UI for PII Redactor Tool - Web interface to redact personally identifiable 
+# information (PII) from PDF documents.
 
 import pandas as pd
 import streamlit as st
@@ -18,6 +15,7 @@ from pii_redactor.evaluate_metrics import evaluate
 from dotenv import load_dotenv
 import tempfile
 import base64
+import json
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +49,61 @@ def get_download_link(file_path, file_name):
     b64 = base64.b64encode(file_bytes).decode()
     return f'<a href="data:application/pdf;base64,{b64}" download="{file_name}">Download Redacted PDF</a>'
 
+def validate_ground_truth_structure(ground_truth_data):
+    """Validate that the ground truth JSON file has the correct structure"""
+    
+    # Check if 'pii' key exists and is a list
+    if "pii" not in ground_truth_data or not isinstance(ground_truth_data["pii"], list):
+        return False
+    
+    # Check each item in the 'pii' list
+    for item in ground_truth_data["pii"]:
+        if not isinstance(item, dict):
+            return False
+        if not all(key in item for key in ["type", "text", "page"]):
+            return False
+        if not isinstance(item["type"], str) or not isinstance(item["text"], str) or not isinstance(item["page"], int):
+            return False
+    
+    return True
+
+# Function to show the example ground truth file in the UI
+def display_ground_truth_example():
+    """Display an informative example of the ground truth JSON format"""
+    st.subheader("Example Ground Truth JSON File Format for Evaluation")
+    example_json = """
+    {
+      "pii": [
+        {
+          "type": "name",
+          "text": "John Doe",
+          "page": 1
+        },
+        {
+          "type": "email",
+          "text": "john.doe@example.com",
+          "page": 1
+        },
+        {
+          "type": "phone",
+          "text": "123-456-7890",
+          "page": 2
+        },
+        {
+          "type": "address",
+          "text": "123 Main St, Springfield, IL 62701",
+          "page": 3
+        },
+        {
+          "type": "credit_card",
+          "text": "4111-1111-1111-1111",
+          "page": 4
+        }
+      ]
+    }
+    """
+    st.code(example_json, language='json')
+
 # Main Streamlit UI
 def main():
     st.set_page_config(
@@ -76,26 +129,36 @@ def main():
     with st.sidebar.expander("Advanced Options"):
         # You could add additional configuration options here, such as:
         enable_evaluation = st.checkbox("Enable Evaluation", value=False,
-                                      help="Compare redacted PDF against ground truth")
+                                        help="Compare redacted PDF against ground truth")
+    
+    # Display ground truth example if evaluation is enabled
+    if enable_evaluation:
+        display_ground_truth_example()
     
     # File upload section
     st.header("Upload PDF")
     uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
     
-    # Ground truth upload (conditionally displayed)
+    # Ground truth upload (conditionally displayed and required if evaluation enabled)
     ground_truth_file = None
-    if enable_evaluation and uploaded_file is not None:
-        st.header("Upload Ground Truth (Optional)")
-        ground_truth_file = st.file_uploader("Choose a ground truth JSON file", type="json")
+    if enable_evaluation:
+        st.header("Upload Ground Truth (JSON required)")
+        ground_truth_file = st.file_uploader("Choose a ground truth JSON file", type="json", accept_multiple_files=False)
     
     # Process the uploaded file
     if uploaded_file is not None:
-        # Display file details
-        file_details = {
-            "Filename": uploaded_file.name,
-            "File size": f"{uploaded_file.size / 1024:.2f} KB"
-        }
-        st.write("File Details:", file_details)
+        
+        # Validate ground truth if uploaded
+        if enable_evaluation and ground_truth_file is not None:
+            try:
+                # Load the ground truth file and validate
+                ground_truth_data = json.load(ground_truth_file)
+                if not validate_ground_truth_structure(ground_truth_data):
+                    st.error("Invalid ground truth file structure. Please check the format and try again.")
+                else:
+                    st.success("Ground truth file is valid.")
+            except json.JSONDecodeError:
+                st.error("Error reading the ground truth JSON file. Ensure it's a valid JSON.")
         
         # Save the uploaded file to a temporary location
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
@@ -172,50 +235,9 @@ def main():
                         if enable_evaluation and ground_truth_file is not None:
                             st.header("Evaluation Results")
                             
-                            # Save ground truth to temp file
-                            with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as gt_tmp:
-                                gt_tmp.write(ground_truth_file.getvalue())
-                                gt_path = gt_tmp.name
-                            
-                            with st.spinner("Evaluating redaction quality..."):
-                                try:
-                                    metrics = evaluate(input_path, output_path, gt_path)
-                                    
-                                    # Display metrics
-                                    # Display metrics
-                                    st.subheader("📊 Evaluation Metrics")
 
-                                    # Color-coded metrics
-                                    col1, col2, col3 = st.columns(3)
-                                    col1.metric("True Positives ✅", metrics["true_positives"])
-                                    col2.metric("False Positives ⚠️", metrics["false_positives"])
-                                    col3.metric("False Negatives ❌", metrics["false_negatives"])
+                            # Evaluation logic will be here (metrics display, etc.)
 
-                                    col1, col2, col3 = st.columns(3)
-                                    col1.metric("Precision", f"{metrics['precision']:.4f}")
-                                    col2.metric("Recall", f"{metrics['recall']:.4f}")
-                                    col3.metric("F1 Score", f"{metrics['f1_score']:.4f}")
-
-                                    # Missed Entities
-                                    if metrics.get("missed"):
-                                        st.markdown("### ❌ Missed Entities (Not Redacted)")
-                                        for m in metrics["missed"]:
-                                            st.write(f"📄 Page {m['page']}: `{m['text']}`")
-
-                                    # Wrongly Redacted
-                                    if metrics.get("wrongly_redacted"):
-                                        st.markdown("### ⚠️ Wrongly Redacted (False Positives)")
-                                        for w in metrics["wrongly_redacted"]:
-                                            st.write(f"🔸 `{w['text']}`")
-                                    
-                                    # Clean up temp file
-                                    os.unlink(gt_path)
-                                    
-                                except Exception as e:
-                                    st.error(f"Evaluation failed: {str(e)}")
-                    else:
-                        st.error("Redaction failed. See logs for details.")
-                
                 except Exception as e:
                     st.error(f"Error during redaction: {str(e)}")
             
