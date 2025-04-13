@@ -42,10 +42,21 @@ A multilingual, context-aware PII redaction tool that removes sensitive informat
 - OpenAI API key
 
 ### Option 1: Install from GitHub (Recommended)
+Install the PII Redactor tool directly from GitHub:
 
 ```bash    
 pip install git+https://github.com/manjuraavi/pdf-pii-redaction-tool.git
 ```
+
+Set up your OpenAI API key:
+   - Option A: Create a `.env` file in the project root with:
+     ```
+     OPENAI_API_KEY=your_api_key_here
+     ```
+   - Option B: Set it as an environment variable:
+     ```bash
+     export OPENAI_API_KEY=your_api_key_here  # On Windows: set OPENAI_API_KEY=your_api_key_here 
+     ```
 
 Then you can run the tool with:
 
@@ -54,6 +65,7 @@ pii-redactor /path/to/your/document.pdf
 ```
 
 ### Option 2: Clone and run locally (for devs):
+Run the tool locally for development or customization purposes
 
 1. Clone the repository:
    ```bash
