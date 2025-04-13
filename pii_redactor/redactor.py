@@ -176,9 +176,6 @@ class PIIRedactor:
 
                         # Find matches using our enhanced matching function
                         matches = self.find_pii_matches_on_page(page, text_to_find)
-                        
-                        if not matches and self.logger:
-                            self.logger.warning(f"No match found on page {page_num + 1} for: {text_to_find}")
 
                         # Add redaction annotations for all matches
                         for rect in matches:
