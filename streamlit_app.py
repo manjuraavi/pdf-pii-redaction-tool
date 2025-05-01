@@ -139,36 +139,36 @@ def main():
                             st.markdown(get_download_link(output_path, f"{base_name}_redacted.pdf"), unsafe_allow_html=True)
                             
                             # Show preview with side-by-side visual comparison
-                            with st.expander("🔍 Preview: Original vs Redacted PDF"):
-                                col1, col2 = st.columns(2)
+                            # with st.expander("🔍 Preview: Original vs Redacted PDF"):
+                            #     col1, col2 = st.columns(2)
 
-                                with col1:
-                                    st.markdown("**📝 Original PDF**")
-                                    with open(input_path, "rb") as f:
-                                        st.download_button(
-                                            label="Download Original",
-                                            data=f.read(),
-                                            file_name=uploaded_file.name,
-                                            mime="application/pdf"
-                                        )
-                                    st.markdown(
-                                        f'<iframe src="data:application/pdf;base64,{base64.b64encode(open(input_path, "rb").read()).decode()}" width="100%" height="500"></iframe>',
-                                        unsafe_allow_html=True
-                                    )
+                            #     with col1:
+                            #         st.markdown("**📝 Original PDF**")
+                            #         with open(input_path, "rb") as f:
+                            #             st.download_button(
+                            #                 label="Download Original",
+                            #                 data=f.read(),
+                            #                 file_name=uploaded_file.name,
+                            #                 mime="application/pdf"
+                            #             )
+                            #         st.markdown(
+                            #             f'<iframe src="data:application/pdf;base64,{base64.b64encode(open(input_path, "rb").read()).decode()}" width="100%" height="500"></iframe>',
+                            #             unsafe_allow_html=True
+                            #         )
 
-                                with col2:
-                                    st.markdown("**🔒 Redacted PDF**")
-                                    with open(output_path, "rb") as f:
-                                        st.download_button(
-                                            label="Download Redacted",
-                                            data=f.read(),
-                                            file_name=f"{base_name}_redacted.pdf",
-                                            mime="application/pdf"
-                                        )
-                                    st.markdown(
-                                        f'<iframe src="data:application/pdf;base64,{base64.b64encode(open(output_path, "rb").read()).decode()}" width="100%" height="500"></iframe>',
-                                        unsafe_allow_html=True
-                                    )
+                            #     with col2:
+                            #         st.markdown("**🔒 Redacted PDF**")
+                            #         with open(output_path, "rb") as f:
+                            #             st.download_button(
+                            #                 label="Download Redacted",
+                            #                 data=f.read(),
+                            #                 file_name=f"{base_name}_redacted.pdf",
+                            #                 mime="application/pdf"
+                            #             )
+                            #         st.markdown(
+                            #             f'<iframe src="data:application/pdf;base64,{base64.b64encode(open(output_path, "rb").read()).decode()}" width="100%" height="500"></iframe>',
+                            #             unsafe_allow_html=True
+                            #         )
                     except Exception as e:
                         st.error(f"Error during redaction: {str(e)}")
                         logger.error(f"Redaction error: {str(e)}")
