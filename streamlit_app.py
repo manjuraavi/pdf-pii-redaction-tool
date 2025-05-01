@@ -9,8 +9,8 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime
-from redactor import PIIRedactor
-from utils import OUTPUT_DIR, check_env_key
+from pii_redactor.redactor import PIIRedactor
+from pii_redactor.utils import OUTPUT_DIR, check_env_key
 from dotenv import load_dotenv
 import tempfile
 import base64
