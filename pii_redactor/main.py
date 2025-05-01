@@ -13,7 +13,6 @@ from datetime import datetime
 import time
 from pii_redactor.redactor import PIIRedactor
 from pii_redactor.utils import OUTPUT_DIR, check_env_key, validate_evaluate_input, validate_input
-from pii_redactor.evaluate_metrics import evaluate
 from dotenv import load_dotenv
 import json
 
@@ -68,29 +67,30 @@ def process_pdf(input_file: str, output_file: str, logger: logging.Logger) -> in
     Outputs: int - 0 if successful, 1 otherwise.
     """
     try:
-        openai_api_key = check_env_key(logger)  # Check for the OpenAI API key
-        if not openai_api_key:
+        if not os.path.exists(input_file):
+            logger.error(f"Input file does not exist: {input_file}")
             return 1
 
-        
+        openai_api_key = check_env_key(logger)
+        if not openai_api_key:
+            logger.error("OpenAI API key is missing. Please set it in the environment.")
+            return 1
+
         logger.info(f"Starting PII redaction on {input_file}")
-        # Initialize the redactor with the logger and API key
         redactor = PIIRedactor(logger=logger, openai_api_key=openai_api_key)
         start = time.time()
-        success = redactor.redact_pdf(input_file, output_file)  # Perform the redaction
+        success = redactor.redact_pdf(input_file, output_file)
         end = time.time()
 
         if success:
-            logger.info(f"Successfully redacted. Redacted file path: {output_file}")
-            logger.info(f"Time taken to redact PII from file: {end - start:.2f}ss")
+            logger.info(f"Successfully redacted. Output saved to: {output_file}")
+            logger.info(f"Time taken: {end - start:.2f} seconds")
             return 0
         else:
             logger.error("Redaction process failed.")
             return 1
-
     except Exception as e:
-        logger.exception(f"Unhandled exception during redaction: {str(e)}")
-        print(f"Error: {str(e)}")
+        logger.exception(f"Unhandled exception during redaction: {e}")
         return 1
 
 def main() -> int:
@@ -105,8 +105,6 @@ def main() -> int:
     parser.add_argument("input_file", type=str, nargs="?", help="Path to the input PDF file")
     parser.add_argument("-o", "--output", dest="output_file", type=str, help="Path to save the redacted PDF")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
-    parser.add_argument("-e", "--evaluate", action="store_true", help="Evaluate redaction with ground truth")
-    parser.add_argument("-gt", "--ground_truth", type=str, help="Path to ground truth JSON file")
     parser.add_argument('--web', action='store_true', help='Launch Streamlit web interface')
 
     args = parser.parse_args()
@@ -134,19 +132,6 @@ def main() -> int:
     if status != 0:
         logger.error("Redaction process failed.")
         return status
-
-    # Run evaluation if flag is set
-    if args.evaluate:
-        if not validate_evaluate_input(args, logger):  # Validate evaluation inputs
-            return 1
-
-        logger.info("Running evaluation against ground truth...")
-        try:
-            results = evaluate(input_path, output_path, args.ground_truth)
-            logger.info("Evaluation complete.")
-        except Exception as e:
-            logger.exception(f"Evaluation failed: {e}")
-            return 1
 
     return 0
 

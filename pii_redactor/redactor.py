@@ -1,3 +1,4 @@
+import os
 import fitz  # PyMuPDF
 from pii_redactor.pdf_processor import PdfProcessor
 from pii_redactor.pii_detector import PIIDetector
@@ -135,78 +136,44 @@ class PIIRedactor:
         Inputs: input_path (str) - Path to the input PDF, output_path (str) - Path to save the redacted PDF.
         Outputs: bool - True if redaction is successful, False otherwise.
         """
-        doc = None
         try:
-            if self.logger:
-                self.logger.info(f"Starting redaction on {input_path}")
-            else:
-                print(f"Starting redaction on {input_path}")
+            if not os.path.exists(input_path):
+                self.logger.error(f"Input file not found: {input_path}")
+                return False
 
-            doc = fitz.open(input_path)  # Open the input PDF file
-
-            # Extract all text from the document to maintain context
+            doc = fitz.open(input_path)
             full_document_text = ""
             for page in doc:
-                blocks = page.get_text("blocks")  # Extract text blocks from the page
+                blocks = page.get_text("blocks")
                 full_document_text += "\n".join([block[4] for block in blocks if isinstance(block[4], str)]) + "\n"
 
-            # Detect PII in the entire document text
             pii_data = self.pii_detector.detect_pii(full_document_text)
             if not pii_data:
-                # If no PII is detected, log and return success
-                if self.logger:
-                    self.logger.info("No PII detected.")
+                self.logger.info("No PII detected in the document.")
                 return True
-                    
-            if self.logger:
-                self.logger.info(f"Detected PII in document: {pii_data}")
 
-            # Process each page for redaction
             for page_num, page in enumerate(doc):
                 try:
-                    page.wrap_contents()  # Wrap page contents to avoid layout issues
-                    
-                    # Get the text of the current page for context
-                    page_text = page.get_text()
-                    
+                    page.wrap_contents()
                     for pii in pii_data:
-                        text_to_find = pii.get("text")  # Get the PII text to redact
+                        text_to_find = pii.get("text")
                         if not text_to_find:
                             continue
-
-                        # Find matches using our enhanced matching function
                         matches = self.find_pii_matches_on_page(page, text_to_find)
-
-                        # Add redaction annotations for all matches
                         for rect in matches:
-                            page.add_redact_annot(rect, fill=(1, 1, 1))  # White fill for redaction
-
-                    page.apply_redactions()  # Apply the redactions to the page
+                            page.add_redact_annot(rect, fill=(1, 1, 1))
+                    page.apply_redactions()
                 except Exception as page_error:
-                    if self.logger:
-                        self.logger.error(f"Error processing page {page_num + 1}: {page_error}")
+                    self.logger.error(f"Error processing page {page_num + 1}: {page_error}")
 
-            # Save PDF and remove metadata
-            doc.set_metadata({})  # Clear metadata
-            doc.del_xml_metadata()  # Remove XML metadata
-            doc.save(output_path, garbage=4, deflate=True, clean=True, pretty=True, incremental=False)  # Save final version
-            
-            if self.logger:
-                self.logger.info(f"Successfully redacted: {output_path}")
-            else:
-                print("Successfully redacted")
-            
+            doc.set_metadata({})
+            doc.del_xml_metadata()
+            doc.save(output_path, garbage=4, deflate=True, clean=True, pretty=True, incremental=False)
+            self.logger.info(f"Redacted PDF saved to: {output_path}")
             return True
-
         except Exception as e:
-            # Handle any exceptions during the redaction process
-            if self.logger:
-                self.logger.exception("Redaction failed")
-            else:
-                print(f"Redaction failed: {e}")
+            self.logger.exception(f"Redaction failed: {e}")
             return False
-        
         finally:
-            # Ensure document is closed even if an exception occurs
             if doc:
                 doc.close()

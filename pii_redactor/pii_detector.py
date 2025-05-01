@@ -254,9 +254,13 @@ class PIIDetector:
             reply = response.choices[0].message.content.strip()
             return self.extract_json_from_llm_response(reply)
 
+        except openai.error.OpenAIError as e:
+            if self.logger:
+                self.logger.error(f"OpenAI API error: {e}")
+            return regex_results
         except Exception as e:
             if self.logger:
-                self.logger.error(f"LLM validation and expansion failed: {e}")
+                self.logger.error(f"Unexpected error during LLM validation: {e}")
             return regex_results
 
     def extract_json_from_llm_response(self, reply: str) -> List[Dict[str, str]]:
